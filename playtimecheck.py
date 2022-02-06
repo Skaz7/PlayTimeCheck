@@ -1,21 +1,12 @@
-import subprocess
 import datetime
 import time
 import os
 import json
-import win32gui # BIBLIOTEKA DO UKRYWANIA APLIKACJI
-import win32.lib.win32con as win32con # BIBLIOTEKA DO UKRYWANIA APLIKACJI
-
+import psutil
 
 
 def process_exists(process_name):
-    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
-    # use buildin check_output right away
-    output = subprocess.check_output(call).decode('utf-8')
-    # check in last line for process name
-    last_line = output.strip().split('\r\n')[-1]
-    # because Fail message could be translated
-    return last_line.lower().startswith(process_name.lower())
+    return process_name in (p.name().lower() for p in psutil.process_iter())
 
 
 def clear_screen():
@@ -28,19 +19,13 @@ def save_data_to_file():
         json.dump(data_dict, file, indent=4)
 
 
-def hide_app():
-    the_program_to_hide = win32gui.GetForegroundWindow()
-    win32gui.ShowWindow(the_program_to_hide , win32con.SW_HIDE)
-
-
 clear_screen()
 
-chrome_activity = [] # stworzenie pustj listy do zapisania danych w formacie ['czas', True] lub ['czas', False]
+chrome_activity = []
 notepad_activity = []
 ToDo_activity = []
 
 
-# MAIN LOOP
 while True:
 
     now = datetime.datetime.now() # get actual data & time
@@ -61,15 +46,15 @@ while True:
         notepad_activity.append([f'{now:%Y-%m-%d %H:%M:%S}', False])
         print(f'{now:%Y-%m-%d %H:%M:%S}: Notepad nie działa')
     
-    if process_exists('ToDo.exe') == True:
+    if process_exists('todo.exe') == True:
         ToDo_activity.append([f'{now:%Y-%m-%d %H:%M:%S}', True])
         print(f'{now:%Y-%m-%d %H:%M:%S}: ToDo działa')
 
-    if process_exists('ToDo.exe') == False:
+    if process_exists('todo.exe') == False:
         ToDo_activity.append([f'{now:%Y-%m-%d %H:%M:%S}', False])
         print(f'{now:%Y-%m-%d %H:%M:%S}: Todo nie działa')
     
     data_dict = {'Chrome': chrome_activity, 'Notepad': notepad_activity, 'ToDo': ToDo_activity}
 
     save_data_to_file() 
-    time.sleep(120) 
+    time.sleep(3) 
